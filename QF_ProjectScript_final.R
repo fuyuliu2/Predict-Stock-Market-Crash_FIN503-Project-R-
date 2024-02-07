@@ -1,0 +1,71 @@
+# Group 6: Fuyu Liu, Zhuoping Fan, Ziqian Ding
+
+# 1 Simple Linear Regression ----------------------------------------------
+Data <- read.csv("P_LIU_FAN_DING.csv")
+head(Data)
+FFER <- Data$Federal_Funds_Effective_Rate
+TFO <- Data$Total_Federal_Outlays
+HPI <- Data$House_Price_Index
+UR <- Data$Unemployment_Rate
+CI <- Data$Confidence_Indicators
+CPI <- Data$CPI_in_NE
+PPI <- Data$PPI_all_commodities
+RSRI <- Data$Realtime_SahmRule_Recession_Indicators
+Rtn <- Data$MthPrcRet
+
+reg_1 <- lm(Rtn ~ FFER)
+summary(reg_1)
+reg_2 <- lm(Rtn ~ TFO)
+summary(reg_2)
+reg_3 <- lm(Rtn ~ HPI)
+summary(reg_3)
+reg_4 <- lm(Rtn ~ UR)
+summary(reg_4)
+reg_5 <- lm(Rtn ~ CI)
+summary(reg_5)
+reg_6 <- lm(Rtn ~ CPI)
+summary(reg_6)
+reg_7 <- lm(Rtn ~ PPI)
+summary(reg_7)
+reg_8 <- lm(Rtn ~ RSRI)
+summary(reg_8)
+
+
+# 2 Multiple Linear Regression --------------------------------------------
+regall<- lm(Rtn~ FFER + TFO + HPI + UR + CI + CPI + PPI + RSRI, data = Data)
+summary(regall)
+
+
+# 3 Model Selection -------------------------------------------------------
+library(leaps)
+subsets <- regsubsets(Rtn~., data = as.data.frame(cbind(FFER, TFO, HPI, UR, CI, CPI, PPI, RSRI)), nbest=1)
+summary(subsets)
+
+library(MASS)
+stepAIC(regall)
+
+x1<- as.matrix(cbind(FFER, TFO, HPI, UR, CI, CPI, PPI, RSRI))
+names_x1 <- c('FFER', 'TFO', 'HPI', 'UR', 'CI', 'CPI', 'PPI', 'RSRI')
+leaps.fit <- leaps(y = Rtn, x = x1, names = names_x1, nbest = 1)
+cbind(leaps.fit$which, Cp = leaps.fit$Cp)
+regcp <- lm(Rtn~ FFER + HPI + UR + CI)
+summary(regcp)
+
+
+# 4 Dummy Regression ------------------------------------------------------
+library(lubridate)
+head(Data)
+months <- month(Data$MthCalDt)
+Aug <- ifelse(months == 8,1,0)
+Sep <- ifelse(months == 9,1,0)
+Oct <- ifelse(months == 10,1,0)
+Dum_reg <- lm(Rtn~ Aug + Sep + Oct + FFER + HPI + UR + CI)
+summary(Dum_reg)
+
+
+# 5 Logit Regression ------------------------------------------------------
+bear <- as.numeric(Data$MthPrcRet <= -0.04)
+logit <- glm(bear ~ FFER + HPI+ UR + CI, data = Data, family = binomial(link = "logit"))
+library(sandwich)
+library(lmtest)
+coeftest(logit, vcov. = vcovHC, type = "HC1")
